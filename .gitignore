@@ -1,0 +1,6 @@
+# write a gitignore file to ignore the wandb files as well as the model that ends in .pt
+# wandb files
+wandb/
+# model files
+*.pt
+```
