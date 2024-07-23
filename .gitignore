@@ -3,4 +3,5 @@
 wandb/
 # model files
 *.pt
+*.pth
 ```
