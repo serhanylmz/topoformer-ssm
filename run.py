@@ -12,12 +12,11 @@ class MambaInference:
         self.model.to(self.device)
         self.model.eval()
 
-    def load_model(self, model_path):
-        # Load the model configuration (you might need to save this separately or hardcode it)
+    def load_model(self, model_path): ## Make sure that this config matches your model
         vocab_size = len(self.tokenizer)
-        d_model = 256  # Adjust these parameters to match your trained model
-        n_layer = 4
-        d_state = 16
+        d_model = 512  # Changed from 256
+        n_layer = 8    # Changed from 4
+        d_state = 64   # Changed from 16
         d_conv = 4
         expand = 2
 
@@ -97,6 +96,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # sample usage
-    # for next word prediction: python inference.py --input_text "Your input text here" --mode next_word --temperature 0.7 --top_k 50 --top_p 0.95
-    # for sequence generation: python inference.py --input_text "Your input text here" --mode sequence --max_length 100 --temperature 0.7 --top_k 50 --top_p 0.95
+    # before usage, make sure that the model config in load_model() matches your trained model configuration. otherwise, there will be a dimension mismatch.
+    # sample usage:
+    # for next word prediction: python run.py --input_text "Your input text here" --mode next_word --temperature 0.7 --top_k 50 --top_p 0.95
+    # for sequence generation: python run.py --input_text "Your input text here" --mode sequence --max_length 100 --temperature 0.7 --top_k 50 --top_p 0.95
