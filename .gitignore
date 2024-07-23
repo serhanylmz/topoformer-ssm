@@ -4,4 +4,8 @@ wandb/
 # model files
 *.pt
 *.pth
+# pycache
+__pycache__/
+# notebook checkpoints
+.ipynb_checkpoints/
 ```

@@ -33,8 +33,10 @@ class MambaInference:
             
             # Apply top-k filtering
             if top_k > 0:
-                indices_to_remove = next_token_logits < torch.topk(next_token_logits, top_k)[0][..., -1, None]
-                next_token_logits[indices_to_remove] = float('-inf')
+                top_k = min(top_k, next_token_logits.size(-1))
+                top_k_logits, top_k_indices = torch.topk(next_token_logits, top_k, dim=-1)
+                next_token_logits = torch.full_like(next_token_logits, float('-inf'))
+                next_token_logits.scatter_(-1, top_k_indices, top_k_logits)
             
             # Apply top-p (nucleus) filtering
             if top_p < 1.0:
@@ -43,13 +45,12 @@ class MambaInference:
                 sorted_indices_to_remove = cumulative_probs > top_p
                 sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
                 sorted_indices_to_remove[..., 0] = 0
-                indices_to_remove = sorted_indices[sorted_indices_to_remove]
+                indices_to_remove = torch.zeros_like(next_token_logits, dtype=torch.bool).scatter_(-1, sorted_indices, sorted_indices_to_remove)
                 next_token_logits[indices_to_remove] = float('-inf')
             
-            # Sample from the filtered distribution
             probs = torch.softmax(next_token_logits, dim=-1)
             next_token = torch.multinomial(probs, num_samples=1)
-
+    
         return self.tokenizer.decode(next_token[0])
 
     def generate_sequence(self, input_text, max_length=50, temperature=1.0, top_k=50, top_p=0.95):
