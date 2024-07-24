@@ -1,35 +1,37 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from mamba_ssm import Mamba
 from typing import Optional
 
-class MambaBlock(nn.Module):
-    def __init__(self, d_model: int, d_state: int, d_conv: int, expand: int, dropout: float = 0.1):
-        super().__init__()
-        self.prenorm = nn.LayerNorm(d_model)
-        self.mamba = Mamba(
-            d_model=d_model,
-            d_state=d_state,
-            d_conv=d_conv,
-            expand=expand
-        )
-        self.dropout = nn.Dropout(dropout)
-        self.residual_scale = nn.Parameter(torch.ones(1))
+# Import Mamba components
+from mamba_ssm import Mamba, Block
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        residual = x
-        x = self.prenorm(x)
-        x = self.mamba(x)
-        x = self.dropout(x)
-        return residual + self.residual_scale * x
+class TopoformerMambaBlock(Block):
+    def __init__(self, d_model, **kwargs):
+        super().__init__(d_model, **kwargs)
+        
+        # Add Topoformer-specific layers
+        self.spatial_query = nn.Linear(d_model, kwargs.get('d_state', 16))
+        self.spatial_reweight = nn.Linear(d_model, kwargs.get('d_state', 16))
+
+    def forward(self, x):
+        # Apply spatial querying before Mamba processing
+        query = self.spatial_query(x)
+        
+        # Process through original Mamba layer
+        x = super().forward(x)
+        
+        # Apply spatial reweighting after Mamba processing
+        reweight = self.spatial_reweight(x)
+        x = x * reweight.unsqueeze(-1)
+        
+        return x
 
 class MambaLM(nn.Module):
-    def __init__(self, vocab_size: int, d_model: int, n_layer: int, d_state: int, d_conv: int, expand: int, dropout: float = 0.1):
+    def __init__(self, vocab_size: int, d_model: int, n_layer: int, **kwargs):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.layers = nn.ModuleList([
-            MambaBlock(d_model, d_state, d_conv, expand, dropout)
+            TopoformerMambaBlock(d_model, **kwargs)
             for _ in range(n_layer)
         ])
         self.final_norm = nn.LayerNorm(d_model)
@@ -47,5 +49,5 @@ class MambaLM(nn.Module):
         x = self.final_norm(x)
         return self.lm_head(x)
 
-def create_mamba_model(vocab_size: int, d_model: int = 512, n_layer: int = 8, d_state: int = 64, d_conv: int = 4, expand: int = 2, dropout: float = 0.1) -> MambaLM:
-    return MambaLM(vocab_size, d_model, n_layer, d_state, d_conv, expand, dropout)
+def create_mamba_model(vocab_size: int, d_model: int = 512, n_layer: int = 8, **kwargs) -> MambaLM:
+    return MambaLM(vocab_size, d_model, n_layer, **kwargs)

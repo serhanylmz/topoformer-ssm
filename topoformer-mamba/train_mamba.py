@@ -158,7 +158,7 @@ def evaluate(model: nn.Module, dataloader: DataLoader, device: torch.device) -> 
     return avg_metrics
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train a Mamba model for next word prediction")
+    parser = argparse.ArgumentParser(description="Train a Mamba-Topoformer model for next word prediction")
     parser.add_argument("--d_model", type=int, default=512, help="Model dimension")
     parser.add_argument("--n_layer", type=int, default=8, help="Number of Mamba layers")
     parser.add_argument("--d_state", type=int, default=64, help="SSM state expansion factor")
@@ -192,7 +192,7 @@ if __name__ == "__main__":
         dropout=args.dropout
     )
 
-    print(f"Created Mamba model with parameters:")
+    print(f"Created Mamba-Topoformer model with parameters:")
     print(f"d_model: {args.d_model}")
     print(f"n_layer: {args.n_layer}")
     print(f"d_state: {args.d_state}")
@@ -205,7 +205,7 @@ if __name__ == "__main__":
                           args.scheduler, args.warmup_steps)
 
     # Save the final trained model
-    torch.save(trained_model.state_dict(), "mamba_lm.pth")
+    torch.save(trained_model.state_dict(), "mamba_topoformer_lm.pth")
 
 # sample run:
 # python train_mamba.py --d_model 512 --n_layer 8 --d_state 64 --d_conv 4 --expand 2 --dropout 0.2 --num_epochs 30 --lr 1e-4 --scheduler cosine --warmup_steps 1000 --batch_size 32 --gradient_accumulation_steps 4 --max_grad_norm 1.0 --patience 5
