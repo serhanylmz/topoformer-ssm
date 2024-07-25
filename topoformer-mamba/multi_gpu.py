@@ -187,4 +187,4 @@ if __name__ == "__main__":
     torch.multiprocessing.spawn(train, args=(args.num_gpus, args), nprocs=args.num_gpus, join=True)
 
 # sample run:
-# python train_mamba.py --d_model 512 --n_layer 8 --d_state 64 --d_conv 4 --expand 2 --dropout 0.2 --num_epochs 30 --lr 1e-4 --scheduler cosine --warmup_steps 1000 --batch_size 32 --gradient_accumulation_steps 4 --max_grad_norm 1.0 --patience 5 --num_gpus 4
+# python multi_gpu.py --d_model 1536 --n_layer 48 --d_state 256 --d_conv 4 --expand 4 --dropout 0.9 --num_epochs 100 --lr 1e-4 --scheduler cosine --warmup_steps 1000 --batch_size 32 --gradient_accumulation_steps 4 --max_grad_norm 1.0 --patience 3 --num_gpus 4
